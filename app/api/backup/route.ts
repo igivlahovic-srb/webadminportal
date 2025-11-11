@@ -104,14 +104,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { spawn } = require("child_process");
-    const backupScript = "/root/webadminportal/CREATE_BACKUP.sh";
+
+    // Try multiple possible locations for backup script
+    const possibleScripts = [
+      "/root/lafantana-whs-admin/CREATE_BACKUP.sh",
+      "/root/webadminportal/CREATE_BACKUP.sh",
+      path.join(process.cwd(), "CREATE_BACKUP.sh"),
+    ];
+
+    let backupScript = "";
+    for (const script of possibleScripts) {
+      if (fs.existsSync(script)) {
+        backupScript = script;
+        break;
+      }
+    }
 
     // Check if script exists
-    if (!fs.existsSync(backupScript)) {
+    if (!backupScript) {
       return NextResponse.json(
         {
           success: false,
-          message: "Backup script not found. Please run git pull first.",
+          message: "Backup script not found. Missing CREATE_BACKUP.sh file.",
         },
         { status: 404 }
       );
